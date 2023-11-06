@@ -1,28 +1,46 @@
 from pyspark.sql import SparkSession
 from pyspark.streaming import StreamingContext
-# from pyspark.sql import Row
-# import json
+import pymongo
+import json
 
-def save_to_mongo(rdd):
+# Define a function to save each RDD to MongoDB using PyMongo
+def save_rdd_to_mongo(rdd):
     if not rdd.isEmpty():
-        df = spark.createDataFrame(rdd)
-        df.write.format("com.mongodb.spark.sql.DefaultSource").mode("append").save()
+        # Collect the data to the driver
+        local_data = rdd.collect()
+        # Initialize PyMongo client
+        client = pymongo.MongoClient("mongodb://192.168.23.32:27017/")
+        # Get the database and collection
+        db = client["reto2"]
+        collection = db["tweets"]
+        # Insert data into the collection
+        for tweet_data in local_data:
+            try:
+                tweet_json = json.loads(tweet_data)
+                collection.insert_one(tweet_json)
+            except json.JSONDecodeError as e:
+                print("Error decoding JSON:", e)
+        # Close the connection
+        client.close()
 
-# Verificar si la ip ha cambiado en la maquina
+# Spark session initialization
 spark = SparkSession.builder \
     .appName("TwitterStream") \
-    .config("spark.mongodb.input.uri", "mongodb://192.168.23.32/reto2.tweets") \
-    .config("spark.mongodb.output.uri", "mongodb://192.168.23.32/reto2.tweets") \
     .getOrCreate()
 
-# nc -lk 9999 desde la BBDD para probar el streaming
+# Create Streaming Context with a 1-second batch interval
 ssc = StreamingContext(spark.sparkContext, 1)
 
+# Define the input sources by creating input DStreams
 lines = ssc.socketTextStream("192.168.23.32", 9999)
+
+# Print each batch of data
 lines.pprint()
 
-# parsed_lines = lines.map(lambda line: Row(**json.loads(line)))
-# parsed_lines.foreachRDD(save_to_mongo)
+# Apply the save_rdd_to_mongo function to each RDD in the DStream
+lines.foreachRDD(save_rdd_to_mongo)
 
+# Start the computation
 ssc.start()
+# Wait for the computation to terminate
 ssc.awaitTermination()
