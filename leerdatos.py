@@ -15,8 +15,6 @@ df = spark.read.format("mongo").load()
 
 pandas_df = df.toPandas()
 
-# print(pandas_df.columns)
-
 user_columns = [
     "id",
     "id_str",
@@ -60,7 +58,7 @@ user_columns = [
 pandas_df['user'] = pandas_df['user'].apply(lambda row: dict(zip(user_columns, row)))
 users_df = json_normalize(pandas_df['user'])
 
-print(users_df.columns)
+################# HAY QUE REVISAR LAS STADISTICAS Y VER QUE NOS INTERESA #######################
 
 # Por ejemplo, calcular la media del 'followers_count' y 'friends_count':
 followers_mean = np.mean(users_df['followers_count'])
