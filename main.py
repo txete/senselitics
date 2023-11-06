@@ -16,7 +16,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # nc -lk 9999 desde la BBDD para probar el streaming
-ssc = StreamingContext(spark.sparkContext, 10)
+ssc = StreamingContext(spark.sparkContext, 1)
 
 lines = ssc.socketTextStream("192.168.23.32", 9999)
 lines.pprint()
