@@ -13,87 +13,13 @@ spark = SparkSession.builder \
 
 df = spark.read.format("mongo").load()
 
+# el df de pandas lo generamos con todos los datos por si en un futuro los necesitamos
 pandas_df = df.toPandas()
 
-user_columns = [
-    "id",
-    "id_str",
-    "name",
-    "screen_name",
-    "location",
-    "url",
-    "description",
-    "protected",
-    "followers_count",
-    "friends_count",
-    "listed_count",
-    "created_at",
-    "favourites_count",
-    "utc_offset",
-    "time_zone",
-    "geo_enabled",
-    "verified",
-    "statuses_count",
-    "lang",
-    "contributors_enabled",
-    "is_translator",
-    "profile_background_color",
-    "profile_background_image_url",
-    "profile_background_image_url_https",
-    "profile_background_tile",
-    "profile_image_url",
-    "profile_image_url_https",
-    "profile_link_color",
-    "profile_sidebar_border_color",
-    "profile_sidebar_fill_color",
-    "profile_text_color",
-    "profile_use_background_image",
-    "default_profile",
-    "default_profile_image",
-    "following",
-    "follow_request_sent",
-    "notifications"
-]
+pandas_df['tweet_length'] = pandas_df['text'].apply(len)
+pandas_df['retweet_count'] = pandas_df['retweet_count'].fillna(0)
+pandas_df['retweet_count'] = pandas_df['retweet_count'].astype(int)
 
-pandas_df['user'] = pandas_df['user'].apply(lambda row: dict(zip(user_columns, row)))
-users_df = json_normalize(pandas_df['user'])
-
-################# HAY QUE REVISAR LAS STADISTICAS Y VER QUE NOS INTERESA #######################
-
-# Por ejemplo, calcular la media del 'followers_count' y 'friends_count':
-followers_mean = np.mean(users_df['followers_count'])
-friends_mean = np.mean(users_df['friends_count'])
-
-# Calcular la mediana de 'followers_count' y 'friends_count':
-followers_median = np.median(users_df['followers_count'].dropna())  # Usar dropna() para evitar NaN
-friends_median = np.median(users_df['friends_count'].dropna())
-
-# Calcular la desviación estándar de 'followers_count' y 'friends_count':
-followers_std = np.std(users_df['followers_count'])
-friends_std = np.std(users_df['friends_count'])
-
-# Calcular el mínimo y máximo de 'followers_count' y 'friends_count':
-followers_min = np.min(users_df['followers_count'])
-friends_min = np.min(users_df['friends_count'])
-
-followers_max = np.max(users_df['followers_count'])
-friends_max = np.max(users_df['friends_count'])
-
-# Si quieres obtener un resumen estadístico completo de las columnas numéricas, puedes usar:
-summary_stats = users_df.describe()
-
-print(f"Media de seguidores: {followers_mean}")
-print(f"Media de amigos: {friends_mean}")
-print(f"Mediana de seguidores: {followers_median}")
-print(f"Mediana de amigos: {friends_median}")
-print(f"Desviación estándar de seguidores: {followers_std}")
-print(f"Desviación estándar de amigos: {friends_std}")
-print(f"Mínimo de seguidores: {followers_min}")
-print(f"Mínimo de amigos: {friends_min}")
-print(f"Máximo de seguidores: {followers_max}")
-print(f"Máximo de amigos: {friends_max}")
-print("\nResumen estadístico de usuarios:")
-print(summary_stats)
 
 
 # pandas_df['followers_count'] = users_df['followers_count']
