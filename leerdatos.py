@@ -15,7 +15,6 @@ spark = SparkSession.builder \
 
 from pyspark.sql.types import StructType, StructField, StringType, LongType, BooleanType, ArrayType, DoubleType, MapType, NullType
 
-# Define nested schemas first
 user_schema = StructType([
     StructField("id", LongType(), nullable=False),
     StructField("id_str", StringType(), nullable=False),
@@ -146,35 +145,41 @@ tweet_schema = StructType([
     StructField("lang", StringType(), nullable=True)
 ])
 
-pipeline = "[{'$match': {'retweet_count': {'$gt': 0}}}, {'$limit': 100}]"
+pipeline = "[{'$limit': 100}]"
 
 df = spark.read.format("mongo").option("pipeline", pipeline).schema(tweet_schema).load()
 
-df_selected = df.select(
-    "id", 
-    "text", 
-    "retweeted_status.id"
-)
+df.createOrReplaceTempView("tweets")
 
-pandas_df = df.toPandas()
+df_grouped = spark.sql("""
+    SELECT parent.id, any_value(parent.text) AS text, COUNT(DISTINCT child.retweeted_status.id) AS retweets 
+    FROM tweets AS parent 
+    LEFT JOIN tweets AS child ON parent.id = child.retweeted_status.id 
+    GROUP BY parent.id
+""")
+
+pandas_df = df_grouped.toPandas()
 
 pandas_df['tweet_length'] = pandas_df['text'].apply(len)
 
 tweet_lengths = pandas_df['tweet_length'].values
-retweet_counts = pandas_df['retweet_count'].values
+retweet_counts = pandas_df['retweets'].values
 
 mean_length = np.mean(tweet_lengths)
 std_dev_length = np.std(tweet_lengths)
 correlation_retweets = np.corrcoef(tweet_lengths, retweet_counts)[0, 1]
 
+# Media de longitud de tweets
+# La media de longitud de los tweets, hay tweets mas largos y mas cortos
 print(f"Media de longitud de tweets: {mean_length}")
-print(f"Desviación estándar de la longitud de tweets: {std_dev_length}")
-print(f"Correlación entre longitud de tweets y retweets: {correlation_retweets}")
 
-# pandas_df['followers_count'] = users_df['followers_count']
-# print(pandas_df['followers_count'].mean())
-# print(pandas_df['followers_count'].std())
-# print(pandas_df['followers_count'].corr(pandas_df['retweet_count']))
+# Desviación estándar de la longitud de tweets
+# Esto significa que la desviación es muy grande, cuanto mas alto el numero significa que mas se alejan de la media
+print(f"Desviación estándar de la longitud de tweets: {std_dev_length}")
+
+# Correlación entre longitud de tweets y retweets
+# Una correlacion negativa significa que no existe relacion entre texto y retweets
+print(f"Correlación entre longitud de tweets y retweets: {correlation_retweets}")
 
 # import pyarrow as pa
 # import pyarrow.parquet as pq
