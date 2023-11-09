@@ -190,7 +190,7 @@ os.environ["HDFS_HOME_DIR"] = "/user/raj_ops"
 table = pa.Table.from_pandas(pandas_df)
 client = InsecureClient('http://localhost:50075', user='raj_ops')
 
-with client.write('df.parquet', overwrite=True) as writer:
+with client.write('report.parquet', overwrite=True) as writer:
     pq.write_table(table, writer)
 
 # from pyspark.sql.functions import mean, stddev
