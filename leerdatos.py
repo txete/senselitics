@@ -1,10 +1,13 @@
 import pandas as pd
 import numpy as np
 import json
+import pyarrow as pa
+import pyarrow.parquet as pq
 from pyspark.sql import SparkSession
 from pandas import json_normalize
 from pyspark.sql.functions import when, col, struct, lit, count
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, DoubleType, IntegerType
+from hdfs import InsecureClient
 
 spark = SparkSession.builder \
     .appName("MongoDBIntegration") \
@@ -181,19 +184,11 @@ print(f"Desviación estándar de la longitud de tweets: {std_dev_length}")
 # Una correlacion negativa significa que no existe relacion entre texto y retweets
 print(f"Correlación entre longitud de tweets y retweets: {correlation_retweets}")
 
-# import pyarrow as pa
-# import pyarrow.parquet as pq
-# from hdfs import InsecureClient
+table = pa.Table.from_pandas(pandas_df)
+client = InsecureClient('http://localhost:1080', user='raj_ops')
 
-# # Convertir Pandas DataFrame a PyArrow Table
-# table = pa.Table.from_pandas(pandas_df)
-
-# # Definir el cliente HDFS
-# client = InsecureClient('http://namenode:50070', user='hdfs')
-
-# # Escribir a HDFS como Parquet
-# with client.write('/path/in/hdfs/results.parquet', overwrite=True) as writer:
-#     pq.write_table(table, writer)
+with client.write('t.json', overwrite=True) as writer:
+    pq.write_table(table, writer)
 
 # from pyspark.sql.functions import mean, stddev
 
