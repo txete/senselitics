@@ -3,6 +3,7 @@ import numpy as np
 import json
 import pyarrow as pa
 import pyarrow.parquet as pq
+import os
 from pyspark.sql import SparkSession
 from pandas import json_normalize
 from pyspark.sql.functions import when, col, struct, lit, count
@@ -184,10 +185,12 @@ print(f"Desviación estándar de la longitud de tweets: {std_dev_length}")
 # Una correlacion negativa significa que no existe relacion entre texto y retweets
 print(f"Correlación entre longitud de tweets y retweets: {correlation_retweets}")
 
-table = pa.Table.from_pandas(pandas_df)
-client = InsecureClient('http://localhost:1080', user='raj_ops')
+os.environ["HDFS_HOME_DIR"] = "/user/raj_ops"
 
-with client.write('t.json', overwrite=True) as writer:
+table = pa.Table.from_pandas(pandas_df)
+client = InsecureClient('http://localhost:50075', user='raj_ops')
+
+with client.write('df.parquet', overwrite=True) as writer:
     pq.write_table(table, writer)
 
 # from pyspark.sql.functions import mean, stddev
