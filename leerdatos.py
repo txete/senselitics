@@ -4,6 +4,8 @@ import json
 import pyarrow as pa
 import pyarrow.parquet as pq
 import os
+import hdfs
+from io import BytesIO
 from pyspark.sql import SparkSession
 from pandas import json_normalize
 from pyspark.sql.functions import when, col, struct, lit, count
@@ -185,23 +187,12 @@ print(f"Desviación estándar de la longitud de tweets: {std_dev_length}")
 # Una correlacion negativa significa que no existe relacion entre texto y retweets
 print(f"Correlación entre longitud de tweets y retweets: {correlation_retweets}")
 
-os.environ["HDFS_HOME_DIR"] = "/user/raj_ops"
-
 table = pa.Table.from_pandas(pandas_df)
-client = InsecureClient('http://localhost:50075', user='raj_ops')
 
-with client.write('report.parquet', overwrite=True) as writer:
-    pq.write_table(table, writer)
+client = InsecureClient('http://localhost:50070', user='raj_ops')
 
-# from pyspark.sql.functions import mean, stddev
+buffer = BytesIO()
+pq.write_table(table, buffer)
 
-# # Calcular estadísticas en Spark
-# mean_value = df.select(mean(df['columna_deseada'])).collect()[0][0]
-# stddev_value = df.select(stddev(df['columna_deseada'])).collect()[0][0]
-
-# from pyspark.sql.functions import corr
-
-# # Calcular la correlación entre dos columnas
-# correlation_value = df.stat.corr('columna1', 'columna2')
-
-
+with client.write('/user/raj_ops/report.parquet', overwrite=True) as writer:
+    writer.write(buffer.getvalue())
