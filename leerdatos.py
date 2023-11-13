@@ -164,7 +164,7 @@ tweet_schema2 = StructType([
 
 
 pipeline = [
-    {'$limit': 10000},
+    {'$limit': 100000},
     {'$project': {'id': 1, 'text': 1, 'retweeted_status_id': '$retweeted_status.id'}},
 ]
 
