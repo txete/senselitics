@@ -183,30 +183,20 @@ df = spark.read.format("mongo").option("pipeline", pipeline_json).schema(tweet_s
 
 # pandas_df = df_grouped.toPandas()
 
-print(df.count())
-
 # df_selected = df.select("id", "text", col("retweeted_status.id").alias("retweeted_status_id"))
 
 pandas_df = df.toPandas()
 
-print(len(pandas_df.index))
-
 retweets_count = pandas_df['retweeted_status_id'].value_counts().rename('retweets')
 
-pandas_df['id'] = pandas_df['id'].astype(str)
-retweets_count.index = retweets_count.index.astype(str)
-
-print(len(pandas_df.index))
+pandas_df['id'] = pandas_df['id'].astype('int64')
+retweets_count.index = retweets_count.index.astype('int64')
 
 pandas_df = pandas_df.join(retweets_count, on='id')
 pandas_df['retweets'].fillna(0, inplace=True)
-pandas_df['retweets'] = pandas_df['retweets'].astype(int)
-
-print(len(pandas_df.index))
+pandas_df['retweets'] = pandas_df['retweets'].astype('int64')
 
 pandas_df['tweet_length'] = pandas_df['text'].apply(len)
-
-print(len(pandas_df.index))
 
 tweet_lengths = pandas_df['tweet_length'].values
 retweet_counts = pandas_df['retweets'].values
@@ -229,7 +219,7 @@ print(f"Correlación entre longitud de tweets y retweets: {correlation_retweets}
 
 table = pa.Table.from_pandas(pandas_df)
 
-client = InsecureClient('http://localhost:50070', user='raj_ops')
+client = InsecureClient('http://localhost:50070', user='raj_ops', timeout=120)
 
 buffer = BytesIO()
 pq.write_table(table, buffer)
