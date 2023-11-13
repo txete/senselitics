@@ -11,6 +11,7 @@ from pandas import json_normalize
 from pyspark.sql.functions import when, col, struct, lit, count
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, DoubleType, IntegerType
 from hdfs import InsecureClient
+import json
 
 spark = SparkSession.builder \
     .appName("MongoDBIntegration") \
@@ -151,22 +152,61 @@ tweet_schema = StructType([
     StructField("lang", StringType(), nullable=True)
 ])
 
-pipeline = "[{'$limit': 100}]"
+# pipeline = "[{'$limit': 100}]"
 
-df = spark.read.format("mongo").option("pipeline", pipeline).schema(tweet_schema).load()
+tweet_schema2 = StructType([
+    StructField("id", LongType(), nullable=False),
+    StructField("text", StringType(), nullable=True),
+    StructField("retweeted_status_id", LongType(), nullable=True)
+])
 
-df.createOrReplaceTempView("tweets")
+# pipeline = [{'$limit': 100},{'$project': {'id': 1,'text': 1,'retweeted_status_id': '$retweeted_status.id'}},{'$count': "total_documents"}]
 
-df_grouped = spark.sql("""
-    SELECT parent.id, any_value(parent.text) AS text, COUNT(DISTINCT child.retweeted_status.id) AS retweets 
-    FROM tweets AS parent 
-    LEFT JOIN tweets AS child ON parent.id = child.retweeted_status.id 
-    GROUP BY parent.id
-""")
 
-pandas_df = df_grouped.toPandas()
+pipeline = [
+    {'$limit': 10000},
+    {'$project': {'id': 1, 'text': 1, 'retweeted_status_id': '$retweeted_status.id'}},
+]
+
+pipeline_json = json.dumps(pipeline)
+
+df = spark.read.format("mongo").option("pipeline", pipeline_json).schema(tweet_schema2).option("partitioner", "MongoSinglePartitioner").load().repartition(1)
+
+# df.createOrReplaceTempView("tweets")
+
+# df_grouped = spark.sql("""
+#     SELECT parent.id, any_value(parent.text) AS text, COUNT(DISTINCT child.retweeted_status.id) AS retweets 
+#     FROM tweets AS parent 
+#     LEFT JOIN tweets AS child ON parent.id = child.retweeted_status.id 
+#     GROUP BY parent.id
+# """)
+
+# pandas_df = df_grouped.toPandas()
+
+print(df.count())
+
+# df_selected = df.select("id", "text", col("retweeted_status.id").alias("retweeted_status_id"))
+
+pandas_df = df.toPandas()
+
+print(len(pandas_df.index))
+
+retweets_count = pandas_df['retweeted_status_id'].value_counts().rename('retweets')
+
+pandas_df['id'] = pandas_df['id'].astype(str)
+retweets_count.index = retweets_count.index.astype(str)
+
+print(len(pandas_df.index))
+
+pandas_df = pandas_df.join(retweets_count, on='id')
+pandas_df['retweets'].fillna(0, inplace=True)
+pandas_df['retweets'] = pandas_df['retweets'].astype(int)
+
+print(len(pandas_df.index))
 
 pandas_df['tweet_length'] = pandas_df['text'].apply(len)
+
+print(len(pandas_df.index))
 
 tweet_lengths = pandas_df['tweet_length'].values
 retweet_counts = pandas_df['retweets'].values
