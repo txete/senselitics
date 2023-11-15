@@ -10,6 +10,7 @@ from pyspark.sql import SparkSession
 from pandas import json_normalize
 from pyspark.sql.functions import when, col, struct, lit, count
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, DoubleType, IntegerType
+from pyspark.sql.types import StructType, StructField, StringType, LongType, BooleanType, ArrayType, DoubleType, MapType, NullType
 from hdfs import InsecureClient
 import json
 
@@ -19,8 +20,6 @@ spark = SparkSession.builder \
     .config("spark.mongodb.output.uri", "mongodb://192.168.23.32:27017/reto2.tweets") \
     .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
     .getOrCreate()
-
-from pyspark.sql.types import StructType, StructField, StringType, LongType, BooleanType, ArrayType, DoubleType, MapType, NullType
 
 user_schema = StructType([
     StructField("id", LongType(), nullable=False),
