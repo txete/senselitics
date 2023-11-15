@@ -48,7 +48,7 @@ for index, row in dfGeneral.iterrows():
             elif palabra.lower() in adjetivos_negativos:
                 negative += 1
         if positive > negative:
-            dfGeneral.at[index, 'support'] = 1
+            dfGeneral.at[index, 'support'] = -1
         else:
             dfGeneral.at[index, 'support'] = 0
 
