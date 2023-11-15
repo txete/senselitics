@@ -4,11 +4,15 @@ import json
 import pyarrow as pa
 import pyarrow.parquet as pq
 import os
+import hdfs
+from io import BytesIO
 from pyspark.sql import SparkSession
 from pandas import json_normalize
 from pyspark.sql.functions import when, col, struct, lit, count
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType, DoubleType, IntegerType
+from pyspark.sql.types import StructType, StructField, StringType, LongType, BooleanType, ArrayType, DoubleType, MapType, NullType
 from hdfs import InsecureClient
+import json
 
 spark = SparkSession.builder \
     .appName("MongoDBIntegration") \
@@ -16,8 +20,6 @@ spark = SparkSession.builder \
     .config("spark.mongodb.output.uri", "mongodb://192.168.23.32:27017/reto2.tweets") \
     .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
     .getOrCreate()
-
-from pyspark.sql.types import StructType, StructField, StringType, LongType, BooleanType, ArrayType, DoubleType, MapType, NullType
 
 user_schema = StructType([
     StructField("id", LongType(), nullable=False),
@@ -149,20 +151,48 @@ tweet_schema = StructType([
     StructField("lang", StringType(), nullable=True)
 ])
 
-pipeline = "[{'$limit': 100}]"
+# pipeline = "[{'$limit': 100}]"
 
-df = spark.read.format("mongo").option("pipeline", pipeline).schema(tweet_schema).load()
+tweet_schema2 = StructType([
+    StructField("id", LongType(), nullable=False),
+    StructField("text", StringType(), nullable=True),
+    StructField("retweeted_status_id", LongType(), nullable=True)
+])
 
-df.createOrReplaceTempView("tweets")
+# pipeline = [{'$limit': 100},{'$project': {'id': 1,'text': 1,'retweeted_status_id': '$retweeted_status.id'}},{'$count': "total_documents"}]
 
-df_grouped = spark.sql("""
-    SELECT parent.id, any_value(parent.text) AS text, COUNT(DISTINCT child.retweeted_status.id) AS retweets 
-    FROM tweets AS parent 
-    LEFT JOIN tweets AS child ON parent.id = child.retweeted_status.id 
-    GROUP BY parent.id
-""")
+# {'$limit': 100000},
+pipeline = [
+    {'$project': {'id': 1, 'text': 1, 'retweeted_status_id': '$retweeted_status.id'}},
+]
 
-pandas_df = df_grouped.toPandas()
+pipeline_json = json.dumps(pipeline)
+
+df = spark.read.format("mongo").option("pipeline", pipeline_json).schema(tweet_schema2).option("partitioner", "MongoSinglePartitioner").load().repartition(1)
+
+# df.createOrReplaceTempView("tweets")
+
+# df_grouped = spark.sql("""
+#     SELECT parent.id, any_value(parent.text) AS text, COUNT(DISTINCT child.retweeted_status.id) AS retweets 
+#     FROM tweets AS parent 
+#     LEFT JOIN tweets AS child ON parent.id = child.retweeted_status.id 
+#     GROUP BY parent.id
+# """)
+
+# pandas_df = df_grouped.toPandas()
+
+# df_selected = df.select("id", "text", col("retweeted_status.id").alias("retweeted_status_id"))
+
+pandas_df = df.toPandas()
+
+retweets_count = pandas_df['retweeted_status_id'].value_counts().rename('retweets')
+
+pandas_df['id'] = pandas_df['id'].astype('int64')
+retweets_count.index = retweets_count.index.astype('int64')
+
+pandas_df = pandas_df.join(retweets_count, on='id')
+pandas_df['retweets'].fillna(0, inplace=True)
+pandas_df['retweets'] = pandas_df['retweets'].astype('int64')
 
 pandas_df['tweet_length'] = pandas_df['text'].apply(len)
 
@@ -185,23 +215,12 @@ print(f"Desviación estándar de la longitud de tweets: {std_dev_length}")
 # Una correlacion negativa significa que no existe relacion entre texto y retweets
 print(f"Correlación entre longitud de tweets y retweets: {correlation_retweets}")
 
-os.environ["HDFS_HOME_DIR"] = "/user/raj_ops"
-
 table = pa.Table.from_pandas(pandas_df)
-client = InsecureClient('http://localhost:50075', user='raj_ops')
 
-with client.write('report.parquet', overwrite=True) as writer:
-    pq.write_table(table, writer)
+client = InsecureClient('http://localhost:50070', user='raj_ops', timeout=120)
 
-# from pyspark.sql.functions import mean, stddev
+buffer = BytesIO()
+pq.write_table(table, buffer)
 
-# # Calcular estadísticas en Spark
-# mean_value = df.select(mean(df['columna_deseada'])).collect()[0][0]
-# stddev_value = df.select(stddev(df['columna_deseada'])).collect()[0][0]
-
-# from pyspark.sql.functions import corr
-
-# # Calcular la correlación entre dos columnas
-# correlation_value = df.stat.corr('columna1', 'columna2')
-
-
+with client.write('/user/raj_ops/report.parquet', overwrite=True) as writer:
+    writer.write(buffer.getvalue())
