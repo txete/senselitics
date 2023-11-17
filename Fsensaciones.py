@@ -14,7 +14,7 @@ def polaridad(tweet):
     return TextBlob(tweet).sentiment.polarity
 
 def conclusion(val):
-    if val<0:
+    if val<0 :
         return -1
     elif val==0:
         return 0
@@ -45,7 +45,7 @@ def limpiarTweet(tweet,pbar):
     
     return filtered
 
-def convertirSentimientos(df,candidato):
+def convertirSentimientos(df,candidato,index):
     print('-------------------------------------------------------------')
     print("Convirtiendo Sensaciones de "+candidato)
     pbar = tqdm(total=len(df['tweet']))
@@ -56,7 +56,7 @@ def convertirSentimientos(df,candidato):
     polarity_col = df['tweet'].apply(polaridad)
     analysis_col = polarity_col.apply(conclusion)
 
-    df = {'Tweet': df['tweet'], 'Candidato': candidato, 'Cod_Estado': df['state_code'], 'Estado': df['state'], 'Subjetividad': subjectivity_col, 'Polaridad': polarity_col, 'Sentimiento': analysis_col}
+    df = {'Tweet': df['tweet'], 'Candidato': candidato, 'Cod_Estado': df['state_code'], 'Estado': df['state'], 'Subjetividad': subjectivity_col, 'Polaridad': polarity_col, 'Sentimiento': analysis_col * index}
     return pd.DataFrame(df)
 
 def comprobarSentimientos(df):
@@ -67,9 +67,13 @@ def comprobarSentimientos(df):
 
 def obtenerSensaciones(candidatos):
     sentimientos = []
-    for candidato in candidatos:
+    for (index,candidato) in enumerate(candidatos):
         df = seleccionarUSA(Fgenerales.importarFichero(candidato+'.csv'))
-        sentimientos.append(convertirSentimientos(df,candidato))
+        
+        if index == 0:
+            index = -1
+        
+        sentimientos.append(convertirSentimientos(df,candidato,index))
     return sentimientos
 
 def prueba(txt):

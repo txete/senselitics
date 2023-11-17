@@ -1,6 +1,9 @@
 import Fsensaciones
 import Fcsv
 import Fgenerales
+import menu
+
+menu.main()
 
 candidatos = ['trump','biden']
 
