@@ -2,7 +2,7 @@ import pandas as pd
 import re
 import nltk
 from tqdm import tqdm
-import F
+import Fgenerales
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from textblob import TextBlob
@@ -68,7 +68,7 @@ def comprobarSentimientos(df):
 def obtenerSensaciones(candidatos):
     sentimientos = []
     for candidato in candidatos:
-        df = seleccionarUSA(F.importarFichero(candidato+'.csv'))
+        df = seleccionarUSA(Fgenerales.importarFichero(candidato+'.csv'))
         sentimientos.append(convertirSentimientos(df,candidato))
     return sentimientos
 
