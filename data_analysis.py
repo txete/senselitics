@@ -9,8 +9,8 @@ tbl = 'candidatos'
 candidatos = ['trump','biden']
 
 def sacarEstadisticas(pandas_df):
-    polaridad = pandas_df['Polaridad'].values
-    retweet_counts = pandas_df['Retweet'].values
+    polaridad = float(pandas_df['Polaridad'].values)
+    retweet_counts = int(pandas_df['Retweet'].values)
 
     mean_length = np.mean(retweet_counts)
     std_dev_length = np.std(retweet_counts)
