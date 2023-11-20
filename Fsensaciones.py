@@ -1,8 +1,5 @@
-import pandas as pd
 import re
 import nltk
-from tqdm import tqdm
-import Fgenerales
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from textblob import TextBlob
@@ -21,14 +18,6 @@ def conclusion(val):
     else:
         return 1
 
-def seleccionarUSA(df):
-    print('-------------------------------------------------------------')
-    print("Seleccionando USA")
-    d = {"United States of America":"United States"}
-    df['country'].replace(d, inplace=True)
-    df = df.loc[df['country'] == "United States"]
-    return df
-
 def limpiarTweet(tweet,pbar):
     pbar.update(1)
     tweet = tweet.lower()
@@ -45,36 +34,11 @@ def limpiarTweet(tweet,pbar):
     
     return filtered
 
-def convertirSentimientos(df,candidato,index):
-    print('-------------------------------------------------------------')
-    print("Convirtiendo Sensaciones de "+candidato)
-    pbar = tqdm(total=len(df['tweet']))
-    Trump = df['tweet'].apply(lambda x: limpiarTweet(x,pbar))
-    pbar.close()
-
-    subjectivity_col = df['tweet'].apply(subjetividad)
-    polarity_col = df['tweet'].apply(polaridad)
-    analysis_col = polarity_col.apply(conclusion)
-
-    df = {'Tweet': df['tweet'], 'Candidato': candidato, 'Cod_Estado': df['state_code'], 'Estado': df['state'], 'Subjetividad': subjectivity_col, 'Polaridad': polarity_col, 'Sentimiento': analysis_col * index}
-    return pd.DataFrame(df)
-
 def comprobarSentimientos(df):
     neg_num = df[df['Sentimiento']==-1].Sentimiento.count()
     neu_num = df[df['Sentimiento']==0].Sentimiento.count()
     pos_num = df[df['Sentimiento']==1].Sentimiento.count()
     return {'neg':neg_num,'neu':neu_num,'pos':pos_num}
-
-def obtenerSensaciones(candidatos):
-    sentimientos = []
-    for (index,candidato) in enumerate(candidatos):
-        df = seleccionarUSA(Fgenerales.importarFichero(candidato+'.csv'))
-        
-        if index == 0:
-            index = -1
-        
-        sentimientos.append(convertirSentimientos(df,candidato,index))
-    return sentimientos
 
 def prueba(txt):
     print(txt)

@@ -1,13 +1,16 @@
 import questionary
-import real_time_data_processing
+import data_processing
+import data_analysis
+import data_hdfs_storage
+import data_visualization
+
 class DataProcessingApp:
     def __init__(self):
         self.menu_options = {
-            "Procesamiento de Datos en Tiempo Real con Spark Streaming": self.real_time_data_processing,
-            "Interacción con MongoDB usando PyMongoDB": self.mongodb_interaction,
+            "Procesamiento de Datos en Tiempo Real con Spark Streaming": self.data_processing,
             "Análisis de Datos con PySpark y Numpy": self.data_analysis,
             "Almacenamiento de Resultados en HDFS": self.hdfs_storage,
-            "Visualización de Datos con PowerBI": self.data_visualization_powerbi,
+            "Visualización de Datos para powerBI y BigML": self.data_visualization,
             "Gráficos y Visualizaciones con Matplotlib": self.graphics_matplotlib,
             "Creación de Modelos de Machine Learning con BigML": self.ml_model_creation,
             "Reproducción de Predicciones con Librerías de IA": self.prediction_reproduction,
@@ -23,20 +26,17 @@ class DataProcessingApp:
         print(f"Has seleccionado: {respuesta}")
         self.menu_options[respuesta]()
 
-    def real_time_data_processing(self):
-        real_time_data_processing.main()
-
-    def mongodb_interaction(self):
-        print("Interactuando con MongoDB usando PyMongoDB...")
+    def data_processing(self):
+        data_processing.main()
 
     def data_analysis(self):
-        print("Analizando datos con PySpark y Numpy...")
+        data_analysis.main()
 
     def hdfs_storage(self):
-        print("Almacenando resultados en HDFS...")
+        data_hdfs_storage.main()
 
-    def data_visualization_powerbi(self):
-        print("Visualizando datos con PowerBI...")
+    def data_visualization(self):
+        data_visualization.main()
 
     def graphics_matplotlib(self):
         print("Creando gráficos con Matplotlib...")
