@@ -49,13 +49,23 @@ def abrir_streaming(segundos=10):
 def save_rdd_to_mongo(rdd):
     if not rdd.isEmpty():
         local_data = rdd.collect()
+
+        tweet_data = {key: local_data[key] for key in ['created_at', 'tweet_id', 'tweet', 'likes', 'retweet_count', 'source']}
+        user_data = {key: local_data[key] for key in ['user_id', 'user_name', 'user_screen_name', 'user_description', 'user_join_date', 'user_followers_count']}
+        location_data = {key: local_data[key] for key in ['user_location', 'lat', 'long', 'city', 'country', 'continent', 'state', 'state_code']}
+        metadata_data = {'collected_at': local_data['collected_at']}
+
         client = pymongo.MongoClient(f"mongodb://{ip}:{port}/")
         db = client[bbdd]
         collection = db[table]
         for tweet_data in local_data:
             try:
-                tweet_json = json.loads(tweet_data)
-                collection.insert_one(tweet_json)
+                # tweet_json = json.loads(tweet_data)
+                db['tweetsG'].insert_one(json.loads(tweet_data))
+                db['usuarios'].insert_one(json.loads(user_data))
+                db['ubicaciones'].insert_one(json.loads(location_data))
+                db['metadatos'].insert_one(json.loads(metadata_data))
+                # collection.insert_one(tweet_json)
             except json.JSONDecodeError as e:
                 print("Error decoding JSON:", e)
         client.close()
