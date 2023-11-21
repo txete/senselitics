@@ -8,6 +8,7 @@ class DataProcessingApp:
     def __init__(self):
         self.menu_options = {
             "Procesamiento de Datos en Tiempo Real con Spark Streaming": self.data_processing,
+            "Cargar datos Ñapa": self.data_processing_napa,
             "Análisis de Datos con PySpark y Numpy": self.data_analysis,
             "Almacenamiento de Resultados en HDFS": self.hdfs_storage,
             "Visualización de Datos para powerBI y BigML": self.data_visualization,
@@ -28,6 +29,9 @@ class DataProcessingApp:
 
     def data_processing(self):
         data_processing.main()
+
+    def data_processing_napa(self):
+        data_processing.main_napa()
 
     def data_analysis(self):
         data_analysis.main()
