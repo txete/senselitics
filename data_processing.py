@@ -60,9 +60,12 @@ def save_rdd_to_mongo(rdd):
                 tweet_data = {key: data[key] for key in ['created_at', 'tweet_id', 'tweet', 'likes', 'retweet_count', 'source'] if key in data}
                 user_data = {key: data[key] for key in ['user_id', 'user_name', 'user_screen_name', 'user_description', 'user_join_date', 'user_followers_count'] if key in data}
                 location_data = {key: data[key] for key in ['user_location', 'lat', 'long', 'city', 'country', 'continent', 'state', 'state_code'] if key in data}                
-                db['tweetsG'].insert_one(tweet_data)
-                db['usuarios'].insert_one(user_data)
-                db['ubicaciones'].insert_one(location_data)
+                
+                location_id = db['ubicaciones'].insert_one(location_data).inserted_id
+                user_id = db['usuarios'].insert_one(user_data).inserted_id
+                tweet_data['user_id'] = user_id
+                tweet_data['location_id'] = location_id
+                db['tweetsG'].insert_one(tweet_data)                
             except json.JSONDecodeError as e:
                 print("Error decoding JSON:", e)
         client.close()
