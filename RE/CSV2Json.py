@@ -2,13 +2,14 @@ import json
 import csv
 import re
 
-def importarFicheroJSON(fichero):
+def importarFicheroJSON(fichero,fichero_json):
     json_data = []
     with open(fichero, mode='r', encoding='utf-8') as csv_file:
         csv_reader = csv.DictReader(csv_file)
         for row in csv_reader:
             json_data.append(row)
-        return json.dumps(json_data, indent=4)
+    with open(fichero_json, 'w', encoding='utf-8') as json_file:
+        json_file.write(json.dumps(json_data, indent=4))
     
 def es_inicio_de_registro(linea):
     """ Verifica si la línea comienza con una fecha y un número, siguiendo el patrón dado """
@@ -33,4 +34,5 @@ def limpiar_csv(archivo_entrada, archivo_salida):
 
 if __name__ == "__main__":
     # limpiar_csv('hashtag_donaldtrump.csv', 'trump.csv')
-    limpiar_csv('hashtag_joebiden.csv', 'biden.csv')
+    # limpiar_csv('hashtag_joebiden.csv', 'biden.csv')
+    importarFicheroJSON('trump.csv','trump.json')

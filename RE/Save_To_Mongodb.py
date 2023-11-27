@@ -1,35 +1,45 @@
 import pymongo
+import json
 # importamos las funciones de streaming
 import Stream_Processor
 
 ### Funcion para guardar los tweets en MongoDB
 def save_to_mongodb(rdd):
     # parametros de conexion
-    ip = '192.168.1.167'
+    ip = '192.168.23.32'
     port = 27017
 
     if not rdd.isEmpty():
         client = pymongo.MongoClient(f"mongodb://{ip}:{port}/")
-        db = client["mydatabase"]
+        db = client["DBreto2"]
         
         # colecciones para guardar los tweets
         collection_short = db["tweets_short"]
         collection_long = db["tweets_long"]
+        collection = db["tweets"]
 
         for tweet in rdd.collect():
-            tweet_data = { "tweet": ','.join(tweet) }
-            
+            # print(tweet)
+
+            ### Si queremos guardarlo en mas de una coleccion
+            # tweet_data = { "tweet": ','.join(tweet) }
             # Suponiendo que 140 caracteres es el límite para un tweet corto
-            if len(tweet_data["tweet"]) < 140:  
-                collection_short.insert_one(tweet_data)
-            else:
-                collection_long.insert_one(tweet_data)
+            # if len(tweet["tweet"]) < 140:  
+            #     collection_short.insert_one(tweet_data)
+            # else:
+            #     collection_long.insert_one(tweet_data)
+
+            tweet_json = json.dumps(tweet)
+            tweet_data = json.loads(tweet_json)
+
+            collection.insert_one(tweet_data)
+            # print(tweet_data)
 
         client.close()
 
 ### Funcion para probar la conexion a MongoDB
 def test_mongo():
-    ip = '192.168.1.167'
+    ip = '192.168.23.32'
     port = 27017
     client = pymongo.MongoClient(f'mongodb://{ip}:{port}/')
     db = client.admin
@@ -61,9 +71,11 @@ def main():
     # Stream simulado
     num_batches = 5
     num_tweets_per_batch = 10
-    file_path = 'trump.csv'
+    # file_path = 'trump.csv'
+    file_path = 'trump.json'
 
-    tweets = Stream_Processor.load_tweets_csv(file_path)
+    # tweets = Stream_Processor.load_tweets_csv(file_path)
+    tweets = Stream_Processor.load_tweets_json(file_path)
     dstream = Stream_Processor.simulate_tweets_rdd(ssc, tweets, num_batches, num_tweets_per_batch)
 
     dstream.foreachRDD(save_to_mongodb)

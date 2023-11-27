@@ -1,5 +1,6 @@
 import random
 import csv
+import json
 from pyspark.sql import SparkSession
 from pyspark.streaming import StreamingContext
 
@@ -23,7 +24,11 @@ def start_streaming(streaming_context):
 def load_tweets_csv(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         return list(csv.reader(file))
-
+    
+def load_tweets_json(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return json.load(file)
+    
 def get_random_tweet(tweets):
     return random.choice(tweets)
 
