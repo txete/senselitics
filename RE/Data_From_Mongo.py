@@ -43,11 +43,42 @@ def perform_aggregations(db_name, collection_name):
     # Agregación 2: Número de Tweets por Estado
     tweets_by_state = collection.aggregate([
         {
+            "$project": {
+                "country": 1,
+                "state": 1,
+                "candidate": {
+                    "$cond": [
+                        {
+                            "$regexMatch": {
+                                "input": "$tweet",
+                                "regex": "Biden",
+                                "options": "i"
+                            }
+                        },
+                        "Biden",
+                        "Trump"
+                    ]
+                }
+            }
+        },
+        {
             "$group": {
-                "_id": "$state",
+                "_id": {
+                    "country": "$country",
+                    "state": "$state",
+                    "candidate": "$candidate"
+                },
                 "count": {
                     "$sum": 1
                 }
+            }
+        },
+        {
+            "$project": {
+                "id": "$_id.candidate",
+                "state": "$_id.state",
+                "country": "$_id.country",
+                "count": 1
             }
         }
     ])
@@ -96,9 +127,16 @@ def perform_aggregations(db_name, collection_name):
                     "$sum": 1
                 }
             }
+        },
+        {
+            "$project": {
+                "id": "$_id.candidate",
+                "date": "$_id.date",
+                "count": 1
+            }
         }
     ])
-
+  
     # Agregación 4: Promedio de Likes y Retweets por Mención de Candidato
     average_engagement_per_candidate = collection.aggregate([
         {
