@@ -1,7 +1,7 @@
 import pandas as pd
 import Data_From_Mongo
 
-def export_data_to_csv(db_name, collection_name, export_folder):
+def export_data(db_name, collection_name, export_folder):
     # Extraer datos
     mentions, states, temporal, engagement = Data_From_Mongo.perform_aggregations(db_name, collection_name)
 
@@ -18,9 +18,9 @@ def export_data_to_csv(db_name, collection_name, export_folder):
     df_engagement.to_json(f"{export_folder}/average_engagement_per_candidate.json", index=False)
 
 def main():
-    db_name = 'reto2'
-    collection_name = 'tweets_long'
-    export_folder = 'exported_data'
+    db_name = 'DBreto2'
+    collection_name = 'tweetsF'
+    export_folder = 'RE'
 
     # Exportar los datos agregados a CSV
-    export_data_to_csv(db_name, collection_name, export_folder)
+    export_data(db_name, collection_name, export_folder)

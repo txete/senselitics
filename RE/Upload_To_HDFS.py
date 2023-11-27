@@ -15,7 +15,7 @@ def main():
     directorio_json = 'exported_data'
 
     # Exportar los datos agregados a CSV
-    Export_To_PowerBi.export_data_to_csv(db_name, collection_name, directorio_json)
+    Export_To_PowerBi.export_data(db_name, collection_name, directorio_json)
 
     # Lista de nombres de archivos JSON a subir
     archivos_json = ['mentions_per_candidate.json', 'tweets_by_state.json', 'temporal_evolution.json', 'average_engagement_per_candidate']
