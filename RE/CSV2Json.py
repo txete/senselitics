@@ -35,4 +35,5 @@ def limpiar_csv(archivo_entrada, archivo_salida):
 if __name__ == "__main__":
     # limpiar_csv('hashtag_donaldtrump.csv', 'trump.csv')
     # limpiar_csv('hashtag_joebiden.csv', 'biden.csv')
-    importarFicheroJSON('trump.csv','trump.json')
+    # importarFicheroJSON('trump.csv','trump.json')
+    importarFicheroJSON('biden.csv','biden.json')
