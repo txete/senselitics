@@ -42,22 +42,22 @@ def simulate_tweets_rdd(ssc, tweets, num_batches, num_tweets_per_batch):
 def main():
     app_name = "TweetsStreaming"
     batch_duration = 10
-    ip_address = '192.168.1.167'
+    ip_address = '192.168.23.32'
     port = 9999    
 
     sc = create_spark_session(app_name)
     ssc = create_streaming_context(sc.sparkContext, batch_duration)
 
     # Stream real
-    # dstream = create_dstream(ssc, ip_address, port)
+    dstream = create_dstream(ssc, ip_address, port)
 
     # Stream simulado
-    num_batches = 5
-    num_tweets_per_batch = 10
-    file_path = 'trump.csv'
+    # num_batches = 5
+    # num_tweets_per_batch = 10
+    # file_path = 'trump.csv'
 
-    tweets = load_tweets_csv(file_path)
-    dstream = simulate_tweets_rdd(ssc, tweets, num_batches, num_tweets_per_batch)
+    # tweets = load_tweets_csv(file_path)
+    # dstream = simulate_tweets_rdd(ssc, tweets, num_batches, num_tweets_per_batch)
 
     dstream.foreachRDD(lambda rdd: rdd.foreach(lambda tweet: print(','.join(tweet).encode('utf-8'))))
 
