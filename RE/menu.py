@@ -7,6 +7,7 @@ import Convert_To_Pandas
 import Numpy_Stats
 import Upload_To_HDFS
 import Data_From_Mongo_SQL
+import Visualize_Matplotlib
 
 class DataProcessingApp:
     def __init__(self):
@@ -19,6 +20,7 @@ class DataProcessingApp:
             "Estadísticas con Numpy": self.Numpy_Stats,
             "Exportar datos para PoweBi": self.Export_To_PowerBi,
             "Subir ficheros a HDFS": self.Upload_To_HDFS,
+            "Tratar datos con Matplotlib": self.Visualize_Matplotlib
         }
 
     def run(self):
@@ -54,6 +56,9 @@ class DataProcessingApp:
     def Data_From_Mongo_SQL(self):
         Data_From_Mongo_SQL.main()
 
+    def Visualize_Matplotlib(self):
+        Visualize_Matplotlib.main()
+        
 if __name__ == "__main__":
     app = DataProcessingApp()
     app.run()
